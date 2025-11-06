@@ -1,20 +1,29 @@
-import { IsOptional, IsString, IsIn, IsNotEmpty } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { WalletType } from 'src/common/enums/wallet.enum';
 
 export class CreateWalletDto {
   @IsString()
   @IsNotEmpty()
-  userId!: string; // userId comes from external User Service
+  @IsUUID()
+  userId!: string;
 
-  @IsOptional()
-  @IsString()
-  currency?: string = 'VND';
+  @IsNumber()
+  @Type(() => Number)
+  otp!: number;
 
-  @IsOptional()
-  @IsString()
-  @IsIn(['PERSONAL', 'BUSINESS'])
-  walletType?: 'PERSONAL' | 'BUSINESS' = 'PERSONAL';
+  @IsNumber()
+  @Type(() => Number)
+  confirmOtp!: number;
 
-  @IsOptional()
-  @IsString()
-  walletNumber?: string;
+  @IsEnum(WalletType)
+  @Transform(({ value }) => value || WalletType.PERSONAL)
+  walletType: WalletType;
 }

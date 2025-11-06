@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { ApproveKycDto } from './dto/approve-kyc.dto';
 import { KycRepository } from './kyc.repository';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class KycService {
@@ -10,6 +11,8 @@ export class KycService {
 
   async submitKyc(dto: SubmitKycDto) {
     const { userId, idNumber } = dto;
+    console.log(uuidv4())
+    
 
     const [existingKycIdNumber, existingKycUserId] = await Promise.all([
       this.kycRepository.findUniqueKyc({ idNumber }),

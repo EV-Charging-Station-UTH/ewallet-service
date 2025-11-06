@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { KycStatus, Prisma } from '@prisma/client';
 import { ApproveKycDto } from './dto/approve-kyc.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class KycRepository {
@@ -20,6 +20,7 @@ export class KycRepository {
     } = dto;
     return this.prisma.kycProfile.create({
       data: {
+        id: uuidv4(),
         userId,
         idNumber,
         idType: 'NATIONAL_ID',

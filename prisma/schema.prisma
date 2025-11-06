@@ -13,6 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Wallet-Service
 model KycProfile {
   id                 String    @id @default(uuid()) @db.Uuid
   userId             String    @unique @map("user_id") @db.Uuid
@@ -56,7 +57,7 @@ model WalletCreationRequest {
 
 model Wallet {
   id           String       @id @default(uuid()) @db.Uuid
-  userId       String       @map("user_id") @db.Uuid
+  userId       String       @unique @map("user_id") @db.Uuid
   otp          String       @map("otp")
   walletNumber String       @unique @map("wallet_number") @db.VarChar(50)
   walletType   WalletType   @default(PERSONAL) @map("wallet_type")
@@ -81,6 +82,7 @@ model Wallet {
   @@map("wallets")
 }
 
+// Transaction-Service
 model Transaction {
   id              String            @id @default(uuid()) @db.Uuid
   transactionRef  String            @unique @default(uuid()) @map("transaction_ref") @db.VarChar(100)
@@ -111,30 +113,6 @@ model Transaction {
   @@index([transactionRef])
   @@map("transactions")
 }
-
-model LinkedBankAccount {
-  id                 String           @id @default(uuid()) @db.Uuid
-  userId             String           @map("user_id") @db.Uuid
-  walletId           String           @map("wallet_id") @db.Uuid
-  bankCode           String           @map("bank_code") @db.VarChar(20)
-  accountNumber      String           @map("account_number") @db.VarChar(50)
-  accountHolderName  String           @map("account_holder_name") @db.VarChar(255)
-  verificationStatus BankVerifyStatus @default(PENDING) @map("verification_status")
-  isPrimary          Boolean          @default(false) @map("is_primary")
-  verifiedAt         DateTime?        @map("verified_at")
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
-
-  // Relations
-  wallet           Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  externalPayments ExternalPayment[]
-
-  @@index([userId])
-  @@index([walletId])
-  @@index([verificationStatus])
-  @@map("linked_bank_accounts")
-}
-
 model LedgerEntry {
   id                  String    @id @default(uuid()) @db.Uuid
   transactionId       String    @map("transaction_id") @db.Uuid
@@ -176,6 +154,30 @@ model IdempotencyKey {
   @@map("idempotency_keys")
 }
 
+model LinkedBankAccount {
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  walletId           String           @map("wallet_id") @db.Uuid
+  bankCode           String           @map("bank_code") @db.VarChar(20)
+  accountNumber      String           @map("account_number") @db.VarChar(50)
+  accountHolderName  String           @map("account_holder_name") @db.VarChar(255)
+  verificationStatus BankVerifyStatus @default(PENDING) @map("verification_status")
+  isPrimary          Boolean          @default(false) @map("is_primary")
+  verifiedAt         DateTime?        @map("verified_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  wallet           Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  externalPayments ExternalPayment[]
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([verificationStatus])
+  @@map("linked_bank_accounts")
+}
+
+// Topup-Service
 model ExternalPayment {
   id                    String            @id @default(uuid()) @db.Uuid
   transactionId         String            @unique @map("transaction_id") @db.Uuid

@@ -1,63 +1,45 @@
-import {
-  Controller,
-  Post,
-  Body,
-} from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
-import { CreateWalletDto } from './dto/create-wallet.dto';
+import {
+  CreateWalletKycDto,
+} from './dto/create-wallet-kyc.dto';
+import { CreateWalletCreationReqDto } from './dto/create-wallet-creation-req.dto';
+import { KycService } from './kyc.service';
+import { SubmitKycDto } from './dto/submit-kyc.dto';
+import { ApproveKycDto } from './dto/approve-kyc.dto';
+import { updateOTPDto } from './dto/update-otp.dto';
 
-class ChangeBalanceDto {
-  walletId!: string;
-  amount!: string;
-  transactionId?: string;
-  description?: string;
-}
-
-@ApiTags('wallets')
 @Controller('wallets')
 export class WalletsController {
-  constructor(private readonly WalletsService: WalletsService) {}
+  constructor(
+    private readonly walletsService: WalletsService,
+    private readonly kycService: KycService,
+  ) {}
 
+  // ===== Wallet =====
   @Post()
-  createWallet(@Body() body: CreateWalletDto) {
-    const wallet = this.WalletsService.create(body);
-    return wallet;
+  createWallet(@Body() body: CreateWalletKycDto) {
+    return this.walletsService.createWalletKyc(body);
   }
 
-  // @Get(':id/balance')
-  // async balance(@Param('id') id: string) {
-  //   return this.service.getBalance(id);
-  // }
+  @Get('/:userId')
+  getWallet(@Param('userId') userId: string) {
+    return this.walletsService.getWallet(userId);
+  }
 
-  // @Get('by-number/:number')
-  // async byNumber(@Param('number') number: string) {
-  //   const w = await this.service.repo.findByWalletNumber(number);
-  //   if (!w) return { data: null };
-  //   return this.service['mapToResponse'](w);
-  // }
+  @Put('/:id/otp')
+  updateOTP(@Param('id') id: string, @Body() body: updateOTPDto) {
+    return this.walletsService.updateOtp({ id, ...body });
+  }
 
-  // // Credit wallet (top-up) — normally this would be called by Transaction Service after external payment success
-  // @Post('credit')
-  // @HttpCode(HttpStatus.OK)
-  // async credit(@Body() body: ChangeBalanceDto) {
-  //   return this.service.credit({
-  //     walletId: body.walletId,
-  //     amount: body.amount,
-  //     transactionId: body.transactionId,
-  //     description: body.description,
-  //   });
-  // }
+  // ===== KYC =====
+  @Post('/kyc/approve')
+  approveKyc(@Body() approveKycDto: ApproveKycDto) {
+    return this.kycService.approveKyc(approveKycDto);
+  }
 
-  // // Debit wallet (charge) — normally used by Transaction Service
-  // @Post('debit')
-  // @HttpCode(HttpStatus.OK)
-  // async debit(@Body() body: ChangeBalanceDto) {
-  //   return this.service.debit({
-  //     walletId: body.walletId,
-  //     amount: body.amount,
-  //     transactionId: body.transactionId,
-  //     description: body.description,
-  //   });
-  // }
+  @Get('/kyc/:userId')
+  getKycByUserId(@Param('userId') userId: string) {
+    return this.kycService.getKycByUserId(userId);
+  }
 }
