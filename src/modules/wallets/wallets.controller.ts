@@ -20,8 +20,8 @@ export class WalletsController {
   constructor(private readonly WalletsService: WalletsService) {}
 
   @Post()
-  async create(@Body() body: CreateWalletDto) {
-    const wallet = await this.WalletsService.create(body);
+  createWallet(@Body() body: CreateWalletDto) {
+    const wallet = this.WalletsService.create(body);
     return wallet;
   }
 

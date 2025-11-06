@@ -8,19 +8,18 @@ export class WalletsRepository {
 
   createWallet(data: {
     userId: string;
-    walletNumber?: string;
-    currency?: string;
+    walletNumber: string;
+    otp: string;
     walletType?: 'PERSONAL' | 'BUSINESS';
   }) {
-    const walletNumber =
-      data.walletNumber ??
-      `WAL-${Date.now()}-${randomBytes(4).toString('hex')}`;
+    const walletNumber = `WAL-${Date.now()}-${randomBytes(4).toString('hex')}`;
 
     return this.prisma.wallet.create({
       data: {
-        userId: BigInt(data.userId),
+        userId: data.userId,
+        otp: '2121',
         walletNumber,
-        currency: data.currency ?? 'VND',
+        currency: 'VND',
         walletType: data.walletType ?? 'PERSONAL',
         status: 'ACTIVE',
         activatedAt: new Date(),

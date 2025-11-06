@@ -14,22 +14,22 @@ datasource db {
 }
 
 model KycProfile {
-  id                 String             @id @default(uuid()) @db.Uuid
-  userId             String            @unique @map("user_id")
-  idNumber           String            @map("id_number") @db.VarChar(20)
-  idType             IdType            @map("id_type")
-  idFrontImageUrl    String?           @map("id_front_image_url") @db.Text
-  idBackImageUrl     String?           @map("id_back_image_url") @db.Text
-  selfieImageUrl     String?           @map("selfie_image_url") @db.Text
-  verificationStatus KycStatus         @default(PENDING) @map("verification_status")
-  verifiedAt         DateTime?         @map("verified_at")
-  verifiedBy         String?           @map("verified_by") @db.VarChar(100)
-  rejectionReason    String?           @map("rejection_reason") @db.Text
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @unique @map("user_id") @db.Uuid
+  idNumber           String    @unique @map("id_number") @db.VarChar(20)
+  idType             IdType    @map("id_type")
+  idFrontImageUrl    String?   @map("id_front_image_url") @db.Text
+  idBackImageUrl     String?   @map("id_back_image_url") @db.Text
+  selfieImageUrl     String?   @map("selfie_image_url") @db.Text
+  verificationStatus KycStatus @default(PENDING) @map("verification_status")
+  verifiedAt         DateTime? @map("verified_at")
+  verifiedBy         String?   @map("verified_by") @db.VarChar(100)
+  rejectionReason    String?   @map("rejection_reason") @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  walletRequests     WalletCreationRequest[]
+  walletRequests WalletCreationRequest[]
 
   @@index([userId])
   @@index([verificationStatus])
@@ -37,17 +37,17 @@ model KycProfile {
 }
 
 model WalletCreationRequest {
-  id              String         @id @default(uuid()) @db.Uuid
-  userId          String         @map("user_id")
-  kycId           String         @map("kyc_id")  @db.Uuid
-  requestStatus   RequestStatus  @default(PENDING) @map("request_status")
-  walletType      WalletType     @default(PERSONAL) @map("wallet_type")
-  rejectionReason String?        @map("rejection_reason") @db.Text
-  processedAt     DateTime?      @map("processed_at")
-  createdAt       DateTime       @default(now()) @map("created_at")
+  id              String        @id @default(uuid()) @db.Uuid
+  userId          String        @map("user_id") @db.Uuid
+  kycId           String        @map("kyc_id") @db.Uuid
+  requestStatus   RequestStatus @default(PENDING) @map("request_status")
+  walletType      WalletType    @default(PERSONAL) @map("wallet_type")
+  rejectionReason String?       @map("rejection_reason") @db.Text
+  processedAt     DateTime?     @map("processed_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
 
   // Relations
-  kyc             KycProfile     @relation(fields: [kycId], references: [id], onDelete: Cascade)
+  kyc KycProfile @relation(fields: [kycId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([requestStatus])
@@ -55,25 +55,25 @@ model WalletCreationRequest {
 }
 
 model Wallet {
-  id                 String         @id @default(uuid()) @db.Uuid
-  userId             String         @map("user_id")
-  otp                String         @map("otp")
-  walletNumber       String         @unique @map("wallet_number") @db.VarChar(50)
-  walletType         WalletType     @default(PERSONAL) @map("wallet_type")
-  currency           String         @default("VND") @db.VarChar(3)
-  balance            BigInt         @default(0) @map("balance")
-  status             WalletStatus   @default(PENDING)
-  dailyLimit         BigInt?        @default(50000000) @map("daily_limit")
-  monthlyLimit       BigInt?        @default(500000000) @map("monthly_limit")
-  activatedAt        DateTime?      @map("activated_at")
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
-  version            Int            @default(0)
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String       @map("user_id") @db.Uuid
+  otp          String       @map("otp")
+  walletNumber String       @unique @map("wallet_number") @db.VarChar(50)
+  walletType   WalletType   @default(PERSONAL) @map("wallet_type")
+  currency     String       @default("VND") @db.VarChar(3)
+  balance      BigInt       @default(0) @map("balance")
+  status       WalletStatus @default(PENDING)
+  dailyLimit   BigInt?      @default(50000000) @map("daily_limit")
+  monthlyLimit BigInt?      @default(500000000) @map("monthly_limit")
+  activatedAt  DateTime?    @map("activated_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  version      Int          @default(0)
 
-  transactions       Transaction[]
-  relatedTransactions Transaction[] @relation("RelatedWallet")
-  ledgerEntries      LedgerEntry[]
-  bankAccounts       LinkedBankAccount[]
+  transactions        Transaction[]
+  relatedTransactions Transaction[]       @relation("RelatedWallet")
+  ledgerEntries       LedgerEntry[]
+  bankAccounts        LinkedBankAccount[]
 
   @@index([userId])
   @@index([status])
@@ -82,26 +82,26 @@ model Wallet {
 }
 
 model Transaction {
-  id                String            @id @default(uuid()) @db.Uuid
-  transactionRef    String            @unique @default(uuid()) @map("transaction_ref") @db.VarChar(100)
-  walletId          String            @map("wallet_id")
-  relatedWalletId   String?           @map("related_wallet_id")
-  transactionType   TransactionType   @map("transaction_type")
-  amountBigint      BigInt            @map("amount_bigint")
-  currency          String            @default("VND") @db.VarChar(3)
-  status            TransactionStatus @default(PENDING)
-  description       String?           @db.Text
-  metadata          Json?             // Store merchant_id, order_id, etc.
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  completedAt       DateTime?         @map("completed_at")
+  id              String            @id @default(uuid()) @db.Uuid
+  transactionRef  String            @unique @default(uuid()) @map("transaction_ref") @db.VarChar(100)
+  walletId        String            @map("wallet_id") @db.Uuid
+  relatedWalletId String?           @map("related_wallet_id") @db.Uuid
+  transactionType TransactionType   @map("transaction_type")
+  amountBigint    BigInt            @map("amount_bigint")
+  currency        String            @default("VND") @db.VarChar(3)
+  status          TransactionStatus @default(PENDING)
+  description     String?           @db.Text
+  metadata        Json? // Store merchant_id, order_id, etc.
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  completedAt     DateTime?         @map("completed_at")
 
   // Relations
-  wallet            Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  relatedWallet     Wallet?           @relation("RelatedWallet", fields: [relatedWalletId], references: [id], onDelete: SetNull)
-  ledgerEntries     LedgerEntry[]
-  idempotencyKey    IdempotencyKey?
-  externalPayment   ExternalPayment?
+  wallet          Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  relatedWallet   Wallet?          @relation("RelatedWallet", fields: [relatedWalletId], references: [id], onDelete: SetNull)
+  ledgerEntries   LedgerEntry[]
+  idempotencyKey  IdempotencyKey?
+  externalPayment ExternalPayment?
 
   @@index([walletId])
   @@index([relatedWalletId])
@@ -113,21 +113,21 @@ model Transaction {
 }
 
 model LinkedBankAccount {
-  id                 String              @id @default(uuid()) @db.Uuid
-  userId             String              @map("user_id")
-  walletId           String              @map("wallet_id")
-  bankCode           String              @map("bank_code") @db.VarChar(20)
-  accountNumber      String              @map("account_number") @db.VarChar(50)
-  accountHolderName  String              @map("account_holder_name") @db.VarChar(255)
-  verificationStatus BankVerifyStatus    @default(PENDING) @map("verification_status")
-  isPrimary          Boolean             @default(false) @map("is_primary")
-  verifiedAt         DateTime?           @map("verified_at")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  walletId           String           @map("wallet_id") @db.Uuid
+  bankCode           String           @map("bank_code") @db.VarChar(20)
+  accountNumber      String           @map("account_number") @db.VarChar(50)
+  accountHolderName  String           @map("account_holder_name") @db.VarChar(255)
+  verificationStatus BankVerifyStatus @default(PENDING) @map("verification_status")
+  isPrimary          Boolean          @default(false) @map("is_primary")
+  verifiedAt         DateTime?        @map("verified_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  wallet             Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  externalPayments   ExternalPayment[]
+  wallet           Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  externalPayments ExternalPayment[]
 
   @@index([userId])
   @@index([walletId])
@@ -136,20 +136,20 @@ model LinkedBankAccount {
 }
 
 model LedgerEntry {
-  id                  String     @id @default(uuid()) @db.Uuid
-  transactionId       String     @map("transaction_id") 
-  walletId            String?    @map("wallet_id")
-  entryType           EntryType  @map("entry_type")
-  amountBigint        BigInt     @map("amount_bigint")
-  currency            String     @default("VND") @db.VarChar(3)
-  balanceBeforeBigint BigInt?    @map("balance_before_bigint")
-  balanceAfterBigint  BigInt?    @map("balance_after_bigint")
-  description         String?    @db.Text
-  createdAt           DateTime   @default(now()) @map("created_at")
+  id                  String    @id @default(uuid()) @db.Uuid
+  transactionId       String    @map("transaction_id") @db.Uuid
+  walletId            String?   @map("wallet_id") @db.Uuid
+  entryType           EntryType @map("entry_type")
+  amountBigint        BigInt    @map("amount_bigint")
+  currency            String    @default("VND") @db.VarChar(3)
+  balanceBeforeBigint BigInt?   @map("balance_before_bigint")
+  balanceAfterBigint  BigInt?   @map("balance_after_bigint")
+  description         String?   @db.Text
+  createdAt           DateTime  @default(now()) @map("created_at")
 
   // Relations
-  transaction         Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  wallet              Wallet?     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  wallet      Wallet?     @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([transactionId])
   @@index([walletId])
@@ -160,7 +160,7 @@ model LedgerEntry {
 
 model IdempotencyKey {
   idempotencyKey String            @id @map("idempotency_key") @db.VarChar(100)
-  transactionId  String?           @unique @map("transaction_id")
+  transactionId  String?           @unique @map("transaction_id") @db.Uuid
   requestHash    String            @map("request_hash") @db.VarChar(64)
   responseData   Json?             @map("response_data")
   status         IdempotencyStatus
@@ -168,7 +168,7 @@ model IdempotencyKey {
   createdAt      DateTime          @default(now()) @map("created_at")
 
   // Relations
-  transaction    Transaction?      @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@index([transactionId])
   @@index([status])
@@ -178,8 +178,8 @@ model IdempotencyKey {
 
 model ExternalPayment {
   id                    String            @id @default(uuid()) @db.Uuid
-  transactionId         String            @unique @map("transaction_id")
-  bankAccountId         String?           @map("bank_account_id")
+  transactionId         String            @unique @map("transaction_id") @db.Uuid
+  bankAccountId         String?           @map("bank_account_id") @db.Uuid
   provider              String            @db.VarChar(50)
   providerTransactionId String?           @map("provider_transaction_id") @db.VarChar(100)
   paymentMethod         PaymentMethod     @map("payment_method")
@@ -191,8 +191,8 @@ model ExternalPayment {
   updatedAt             DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  transaction           Transaction       @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  bankAccount           LinkedBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+  transaction Transaction        @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  bankAccount LinkedBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   @@index([transactionId])
   @@index([provider])
@@ -200,7 +200,6 @@ model ExternalPayment {
   @@index([status])
   @@map("external_payments")
 }
-
 
 // ============================================
 // *** ENUM

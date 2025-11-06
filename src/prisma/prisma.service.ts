@@ -71,7 +71,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   /**
    * Verify ledger balance for a transaction
    */
-  async verifyLedgerBalance(transactionId: bigint): Promise<boolean> {
+  async verifyLedgerBalance(transactionId: string): Promise<boolean> {
     const entries = await this.ledgerEntry.findMany({
       where: { transactionId },
     });

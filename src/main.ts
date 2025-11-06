@@ -42,8 +42,8 @@ async function bootstrap() {
   ╔═══════════════════════════════════════════╗
   ║ E-Wallet API Server is running!           ║
   ║                                           ║
-  ║ URL: http://localhost:${port}             ║
-  ║ Docs: http://localhost:${port}/api/docs   ║
+  ║ URL: http://localhost:${port}                ║
+  ║ Docs: http://localhost:${port}/api/docs      ║
   ╚═══════════════════════════════════════════╝
   `);
 }
