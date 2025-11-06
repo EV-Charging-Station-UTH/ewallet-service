@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model KycProfile {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String            @unique @map("user_id")
+  idNumber           String            @map("id_number") @db.VarChar(20)
+  idType             IdType            @map("id_type")
+  idFrontImageUrl    String?           @map("id_front_image_url") @db.Text
+  idBackImageUrl     String?           @map("id_back_image_url") @db.Text
+  selfieImageUrl     String?           @map("selfie_image_url") @db.Text
+  verificationStatus KycStatus         @default(PENDING) @map("verification_status")
+  verifiedAt         DateTime?         @map("verified_at")
+  verifiedBy         String?           @map("verified_by") @db.VarChar(100)
+  rejectionReason    String?           @map("rejection_reason") @db.Text
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  walletRequests     WalletCreationRequest[]
+
+  @@index([userId])
+  @@index([verificationStatus])
+  @@map("kyc_profiles")
+}
+
+model WalletCreationRequest {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @map("user_id")
+  kycId           String         @map("kyc_id")  @db.Uuid
+  requestStatus   RequestStatus  @default(PENDING) @map("request_status")
+  walletType      WalletType     @default(PERSONAL) @map("wallet_type")
+  rejectionReason String?        @map("rejection_reason") @db.Text
+  processedAt     DateTime?      @map("processed_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  kyc             KycProfile     @relation(fields: [kycId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([requestStatus])
+  @@map("wallet_creation_requests")
+}
+
+model Wallet {
+  id                 String         @id @default(uuid()) @db.Uuid
+  userId             String         @map("user_id")
+  otp                String         @map("otp")
+  walletNumber       String         @unique @map("wallet_number") @db.VarChar(50)
+  walletType         WalletType     @default(PERSONAL) @map("wallet_type")
+  currency           String         @default("VND") @db.VarChar(3)
+  balance            BigInt         @default(0) @map("balance")
+  status             WalletStatus   @default(PENDING)
+  dailyLimit         BigInt?        @default(50000000) @map("daily_limit")
+  monthlyLimit       BigInt?        @default(500000000) @map("monthly_limit")
+  activatedAt        DateTime?      @map("activated_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  version            Int            @default(0)
+
+  transactions       Transaction[]
+  relatedTransactions Transaction[] @relation("RelatedWallet")
+  ledgerEntries      LedgerEntry[]
+  bankAccounts       LinkedBankAccount[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([walletNumber])
+  @@map("wallets")
+}
+
+model Transaction {
+  id                String            @id @default(uuid()) @db.Uuid
+  transactionRef    String            @unique @default(uuid()) @map("transaction_ref") @db.VarChar(100)
+  walletId          String            @map("wallet_id")
+  relatedWalletId   String?           @map("related_wallet_id")
+  transactionType   TransactionType   @map("transaction_type")
+  amountBigint      BigInt            @map("amount_bigint")
+  currency          String            @default("VND") @db.VarChar(3)
+  status            TransactionStatus @default(PENDING)
+  description       String?           @db.Text
+  metadata          Json?             // Store merchant_id, order_id, etc.
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  completedAt       DateTime?         @map("completed_at")
+
+  // Relations
+  wallet            Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  relatedWallet     Wallet?           @relation("RelatedWallet", fields: [relatedWalletId], references: [id], onDelete: SetNull)
+  ledgerEntries     LedgerEntry[]
+  idempotencyKey    IdempotencyKey?
+  externalPayment   ExternalPayment?
+
+  @@index([walletId])
+  @@index([relatedWalletId])
+  @@index([status])
+  @@index([transactionType])
+  @@index([createdAt])
+  @@index([transactionRef])
+  @@map("transactions")
+}
+
+model LinkedBankAccount {
+  id                 String              @id @default(uuid()) @db.Uuid
+  userId             String              @map("user_id")
+  walletId           String              @map("wallet_id")
+  bankCode           String              @map("bank_code") @db.VarChar(20)
+  accountNumber      String              @map("account_number") @db.VarChar(50)
+  accountHolderName  String              @map("account_holder_name") @db.VarChar(255)
+  verificationStatus BankVerifyStatus    @default(PENDING) @map("verification_status")
+  isPrimary          Boolean             @default(false) @map("is_primary")
+  verifiedAt         DateTime?           @map("verified_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  wallet             Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  externalPayments   ExternalPayment[]
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([verificationStatus])
+  @@map("linked_bank_accounts")
+}
+
+model LedgerEntry {
+  id                  String     @id @default(uuid()) @db.Uuid
+  transactionId       String     @map("transaction_id") 
+  walletId            String?    @map("wallet_id")
+  entryType           EntryType  @map("entry_type")
+  amountBigint        BigInt     @map("amount_bigint")
+  currency            String     @default("VND") @db.VarChar(3)
+  balanceBeforeBigint BigInt?    @map("balance_before_bigint")
+  balanceAfterBigint  BigInt?    @map("balance_after_bigint")
+  description         String?    @db.Text
+  createdAt           DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  transaction         Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  wallet              Wallet?     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([walletId])
+  @@index([entryType])
+  @@index([createdAt])
+  @@map("ledger_entries")
+}
+
+model IdempotencyKey {
+  idempotencyKey String            @id @map("idempotency_key") @db.VarChar(100)
+  transactionId  String?           @unique @map("transaction_id")
+  requestHash    String            @map("request_hash") @db.VarChar(64)
+  responseData   Json?             @map("response_data")
+  status         IdempotencyStatus
+  expiresAt      DateTime          @map("expires_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  transaction    Transaction?      @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model ExternalPayment {
+  id                    String            @id @default(uuid()) @db.Uuid
+  transactionId         String            @unique @map("transaction_id")
+  bankAccountId         String?           @map("bank_account_id")
+  provider              String            @db.VarChar(50)
+  providerTransactionId String?           @map("provider_transaction_id") @db.VarChar(100)
+  paymentMethod         PaymentMethod     @map("payment_method")
+  amountBigint          BigInt            @map("amount_bigint")
+  currency              String            @default("VND") @db.VarChar(3)
+  status                TransactionStatus @default(PENDING)
+  callbackData          Json?             @map("callback_data")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  transaction           Transaction       @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  bankAccount           LinkedBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+
+  @@index([transactionId])
+  @@index([provider])
+  @@index([providerTransactionId])
+  @@index([status])
+  @@map("external_payments")
+}
+
+
+// ============================================
+// *** ENUM
+// ============================================
+enum RequestStatus {
+  PENDING
+  PROCESSING
+  APPROVED
+  REJECTED
+}
+
+enum WalletType {
+  PERSONAL
+  BUSINESS
+}
+
+enum WalletStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum TransactionType {
+  TOPUP
+  WITHDRAWAL
+  PAYMENT
+  REFUND
+  P2P_TRANSFER_IN
+  P2P_TRANSFER_OUT
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EntryType {
+  DEBIT
+  CREDIT
+}
+
+enum IdType {
+  NATIONAL_ID
+  PASSPORT
+  DRIVER_LICENSE
+}
+
+enum KycStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  QR_CODE
+  ATM
+}
+
+enum BankVerifyStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
