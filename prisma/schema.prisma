@@ -58,7 +58,7 @@ model WalletCreationRequest {
 model Wallet {
   id           String       @id @default(uuid()) @db.Uuid
   userId       String       @unique @map("user_id") @db.Uuid
-  otp          String       @map("otp")
+  pinCode      String       @map("pin_code")
   walletNumber String       @unique @map("wallet_number") @db.VarChar(50)
   walletType   WalletType   @default(PERSONAL) @map("wallet_type")
   currency     String       @default("VND") @db.VarChar(3)
@@ -113,6 +113,7 @@ model Transaction {
   @@index([transactionRef])
   @@map("transactions")
 }
+
 model LedgerEntry {
   id                  String    @id @default(uuid()) @db.Uuid
   transactionId       String    @map("transaction_id") @db.Uuid

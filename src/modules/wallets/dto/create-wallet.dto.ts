@@ -17,11 +17,11 @@ export class CreateWalletDto {
 
   @IsNumber()
   @Type(() => Number)
-  otp!: number;
+  pinCode!: number;
 
   @IsNumber()
   @Type(() => Number)
-  confirmOtp!: number;
+  confirmPinCode!: number;
 
   @IsEnum(WalletType)
   @Transform(({ value }) => value || WalletType.PERSONAL)

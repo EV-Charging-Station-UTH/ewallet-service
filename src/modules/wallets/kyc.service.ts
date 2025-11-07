@@ -10,9 +10,7 @@ export class KycService {
   constructor(private readonly kycRepository: KycRepository) {}
 
   async submitKyc(dto: SubmitKycDto) {
-    const { userId, idNumber } = dto;
-    console.log(uuidv4())
-    
+    const { userId, idNumber } = dto;    
 
     const [existingKycIdNumber, existingKycUserId] = await Promise.all([
       this.kycRepository.findUniqueKyc({ idNumber }),

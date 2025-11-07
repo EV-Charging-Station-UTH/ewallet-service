@@ -7,7 +7,7 @@ import {
   IsUUID,
 } from 'class-validator';
 
-export class updateOTPDto {
+export class updatePinCodeDto {
   @IsString()
   @IsNotEmpty()
   @IsUUID()
@@ -15,13 +15,13 @@ export class updateOTPDto {
 
   @IsNumber()
   @Type(() => Number)
-  otpOld!: number;
+  pinCodeOld!: number;
 
   @IsNumber()
   @Type(() => Number)
-  newOtp!: number;
+  newPinCode!: number;
 
   @IsNumber()
   @Type(() => Number)
-  comfirmNewOtp!: number;
+  comfirmNewPinCode!: number;
 }

@@ -20,14 +20,14 @@ export class WalletsRepository {
   createWallet(data: {
     userId: string;
     walletNumber: string;
-    otp: string;
+    pinCode: string;
     walletType?: WalletType;
   }) {
     return this.prisma.wallet.create({
       data: {
         id: uuidv4(),
         userId: data.userId,
-        otp: data.otp,
+        pinCode: data.pinCode,
         walletNumber: data.walletNumber,
         currency: 'VND',
         walletType: data.walletType ?? 'PERSONAL',

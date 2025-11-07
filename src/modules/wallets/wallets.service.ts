@@ -3,9 +3,9 @@ import { WalletsRepository } from './wallets.repository';
 import { CreateWalletKycDto } from './dto/create-wallet-kyc.dto';
 import { HashService } from 'src/common/libs/hash/hash.service';
 import { randomBytes } from 'crypto';
-import { updateOTPDto } from './dto/update-otp.dto';
 import { KycService } from './kyc.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
+import { updatePinCodeDto } from './dto/update-otp.dto';
 
 @Injectable()
 export class WalletsService {
@@ -20,7 +20,11 @@ export class WalletsService {
     let exists = true;
 
     while (exists) {
-      walletNumber = `WAL-${Date.now()}-${randomBytes(4).toString('hex')}`;
+      const bytes = randomBytes(8);
+      const num = BigInt('0x' + bytes.toString('hex'))
+        .toString()
+        .slice(0, 12);
+      walletNumber = `WAL-${num}`;
 
       const walletNumberExist = await this.walletsRepository.findUniqueWallet({
         walletNumber,
@@ -35,15 +39,15 @@ export class WalletsService {
   }
 
   async create(body: CreateWalletDto) {
-    const { otp, confirmOtp, userId, walletType } = body;
-    if (otp !== confirmOtp) {
+    const { confirmPinCode, pinCode, userId, walletType } = body;
+    if (pinCode !== confirmPinCode) {
       throw new Error("OTP don't match!");
     }
-    const otpHash = await this.hashService.hash(String(otp));
+    const pinCodeHash = await this.hashService.hash(String(pinCode));
     const walletNumber = await this.generateUniqueWalletNumber();
 
     return await this.walletsRepository.createWallet({
-      otp: otpHash,
+      pinCode: pinCodeHash,
       walletNumber,
       userId,
       walletType,
@@ -52,12 +56,12 @@ export class WalletsService {
 
   async createWalletKyc(body: CreateWalletKycDto) {
     const {
-      confirmOtp,
+      confirmPinCode,
+      pinCode,
       idBackImageUrl,
       idFrontImageUrl,
       idNumber,
       idType,
-      otp,
       selfieImageUrl,
       userId,
       walletType,
@@ -72,8 +76,8 @@ export class WalletsService {
         userId,
       }),
       this.create({
-        confirmOtp,
-        otp,
+        confirmPinCode,
+        pinCode,
         userId,
         walletType,
       }),
@@ -85,7 +89,7 @@ export class WalletsService {
     });
 
     return {
-      message: 'Create wallet succfully!',
+      message: 'Create wallet sucessfully!',
     };
   }
 
@@ -93,29 +97,29 @@ export class WalletsService {
     return await this.walletsRepository.findUniqueWallet({ userId });
   }
 
-  async updateOtp(body: updateOTPDto & { id: string }) {
-    const { id, comfirmNewOtp, newOtp, otpOld, userId } = body;
+  async updateOtp(body: updatePinCodeDto & { id: string }) {
+    const { id, comfirmNewPinCode, newPinCode, pinCodeOld } = body;
     const walletExit = await this.walletsRepository.findUniqueWallet({ id });
     if (!walletExit) {
       throw new Error('Wallet not found!');
     }
-    if (newOtp !== comfirmNewOtp) {
+    if (newPinCode !== comfirmNewPinCode) {
       throw new Error("OTP and confirm OTP don't match!");
     }
     const oldOtpDecode = await this.hashService.compare({
-      hashed: walletExit.otp,
-      plainText: String(otpOld),
+      hashed: walletExit.pinCode,
+      plainText: String(pinCodeOld),
     });
     if (!oldOtpDecode) {
       throw new Error("OTP don't match!");
     }
-    const otpHash = await this.hashService.hash(String(newOtp));
+    const otpHash = await this.hashService.hash(String(newPinCode));
     await this.walletsRepository.update({
       id,
       otp: otpHash,
     });
     return {
-      message: "Update OTP wallet successfully"
-    }
+      message: 'Update OTP wallet successfully',
+    };
   }
 }

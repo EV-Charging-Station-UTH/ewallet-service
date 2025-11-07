@@ -6,6 +6,10 @@ import {
   IsNumber,
   IsUUID,
   IsEnum,
+  Max,
+  MaxLength,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { WalletType } from 'src/common/enums/wallet.enum';
 
@@ -15,11 +19,15 @@ export class CreateWalletKycDto {
   @IsUUID()
   userId!: string;
 
-  @IsNumber()
-  otp: number;
+  @IsInt()
+  @Min(0)
+  @Max(999999)
+  pinCode: number;
 
-  @IsNumber()
-  confirmOtp: number;
+  @IsInt()
+  @Min(0)
+  @Max(999999)
+  confirmPinCode: number;
 
   @IsEnum(WalletType)
   walletType: WalletType = WalletType.PERSONAL;

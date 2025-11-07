@@ -3,11 +3,9 @@ import { WalletsService } from './wallets.service';
 import {
   CreateWalletKycDto,
 } from './dto/create-wallet-kyc.dto';
-import { CreateWalletCreationReqDto } from './dto/create-wallet-creation-req.dto';
 import { KycService } from './kyc.service';
-import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { ApproveKycDto } from './dto/approve-kyc.dto';
-import { updateOTPDto } from './dto/update-otp.dto';
+import { updatePinCodeDto } from './dto/update-otp.dto';
 
 @Controller('wallets')
 export class WalletsController {
@@ -28,7 +26,7 @@ export class WalletsController {
   }
 
   @Put('/:id/otp')
-  updateOTP(@Param('id') id: string, @Body() body: updateOTPDto) {
+  updateOTP(@Param('id') id: string, @Body() body: updatePinCodeDto) {
     return this.walletsService.updateOtp({ id, ...body });
   }
 
