@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { FirebaseModule } from './firebase/firebase.module';
+import { HooksModule } from './modules/hooks/hooks.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FirebaseModule } from './firebase/firebase.module';
     WalletsModule,
     TransactionModule,
     NotificationModule,
+    HooksModule,
     CommonModule,
   ],
   controllers: [AppController],

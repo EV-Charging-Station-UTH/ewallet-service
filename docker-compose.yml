@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # ------------------------
+  # RabbitMQ
+  # ------------------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"    # RabbitMQ protocol
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend-network
+
+  # ------------------------
+  # Postgres Database
+  # ------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: bifwallet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+  # ------------------------
+  # NestJS App
+  # ------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bifwallet-app
+    restart: always
+    environment:
+      DATABASE_URL: postgres://admin:admin123@postgres:5432/bifwallet
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: development
+    ports:
+      - "3003:3003"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - backend-network
+
+# ------------------------
+# Networks
+# ------------------------
+networks:
+  backend-network:
+    driver: bridge
+
+# ------------------------
+# Volumes
+# ------------------------
+volumes:
+  rabbitmq_data:
+  postgres_data:

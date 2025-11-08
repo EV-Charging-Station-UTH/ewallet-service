@@ -5,10 +5,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { IdempotencyRepository } from 'src/common/repositories/idempotency.repository';
 
 @Injectable()
-export class SepayWebhookService {
+export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly idempotencyRepository: IdempotencyRepository,
   ) {}
 
   async receiver(body: WebhookSepayBodyDto) {

@@ -17,6 +17,13 @@ export enum WalletType {
   BUSINESS = 'BUSINESS',
 }
 
+export enum KycStatus {
+  PENDING = 'PENDING',
+  REVIEWING = 'REVIEWING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 export const IdempotencyStatus = {
   PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',

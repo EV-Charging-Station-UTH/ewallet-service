@@ -1,6 +1,6 @@
 // src/modules/kyc/dtos/approve-kyc.dto.ts
 import { IsString, IsEnum } from 'class-validator';
-import { KycStatus } from '@prisma/client';
+import { KycStatus } from 'src/common/enums/wallet.enum';
 
 export class ApproveKycDto {
   @IsString()

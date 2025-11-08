@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
-import { KycStatus, Prisma } from '@prisma/client';
+import {  Prisma } from '@prisma/client';
 import { ApproveKycDto } from './dto/approve-kyc.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { KycStatus } from 'src/common/enums/wallet.enum';
 
 @Injectable()
 export class KycRepository {
