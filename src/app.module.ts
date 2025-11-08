@@ -6,6 +6,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
 import { CommonModule } from './common/common.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
+import { NotificationModule } from './modules/notifications/notifications.module';
+import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
@@ -13,6 +15,7 @@ import { TransactionModule } from './modules/transactions/transaction.module';
     PrismaModule,
     WalletsModule,
     TransactionModule,
+    NotificationModule,
     CommonModule,
   ],
   controllers: [AppController],

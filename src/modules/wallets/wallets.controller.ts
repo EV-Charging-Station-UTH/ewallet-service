@@ -25,7 +25,7 @@ export class WalletsController {
     return this.walletsService.getWallet(userId);
   }
 
-  @Put('/:id/otp')
+  @Put('/:id/pin-code')
   updateOTP(@Param('id') id: string, @Body() body: updatePinCodeDto) {
     return this.walletsService.updateOtp({ id, ...body });
   }

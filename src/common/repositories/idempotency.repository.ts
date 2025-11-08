@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { CreateIdempotencyDataType } from './type';
+import { CreateIdempotencyDataType } from '../../modules/transactions/type';
 
 type UpdateIdempotencyDataType = Partial<Omit<CreateIdempotencyDataType, 'idempotencyKey'>> & {
   idempotencyKey: string;

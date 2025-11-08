@@ -10,4 +10,8 @@ export class TransactionController {
   transfer(@Body() dto: CreateTransferDto) {
     return this.txService.transfer(dto);
   }
+  @Post('topup')
+  topup(@Body() dto: CreateTransferDto) {
+    return this.txService.transfer(dto);
+  }
 }

@@ -1,12 +1,14 @@
 // src/modules/kyc/kyc.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { IdempotencyRepository } from './idempotency.repository';
+import { IdempotencyRepository } from '../../common/repositories/idempotency.repository';
 import { TransactionRepository } from './transaction.repository';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { HashService } from 'src/common/libs/hash/hash.service';
 import { IdempotencyStatus } from 'src/common/enums/wallet.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateTopupDto } from './dto/create-topup.dto';
+import { generateTransactionCode } from 'src/common/helpers/generate-transaction-code';
 
 @Injectable()
 export class TransactionService {
@@ -78,7 +80,7 @@ export class TransactionService {
           throw new BadRequestException('Insufficient balance');
         if (sender.balance > sender.dailyLimit!)
           throw new BadRequestException('Exceeds daily limit');
-    
+
         // STEP 4: Create transaction
         const transaction = await tx.transaction.create({
           data: {
@@ -157,18 +159,91 @@ export class TransactionService {
       });
 
       // COMMIT
-      console.log("RESULT TRANSFER", result)
+      console.log('RESULT TRANSFER', result);
       return {
-        message: `${fromWalletNumber} transfer to ${toWalletNumber} with ${amount} VND`
+        message: `${fromWalletNumber} transfer to ${toWalletNumber} with ${amount} VND`,
       };
     } catch (error) {
-
       // if Error => rollback
       await this.idempotencyRepository.update({
         idempotencyKey,
         status: 'FAILED',
       });
-      console.log("ERROR", error)
+      console.log('ERROR', error);
+      throw error;
+    }
+  }
+
+  async topup(data: CreateTopupDto) {
+    const { amount, fromWalletId, fromWalletNumber, pinCode, idempotencyKey } =
+      data;
+    const existingIdempotencyKey =
+      await this.idempotencyRepository.findUniqueIdempotencyKey({
+        idempotencyKey,
+      });
+    if (existingIdempotencyKey) {
+      if (existingIdempotencyKey.status === 'COMPLETED') {
+        return existingIdempotencyKey.responseData;
+      }
+      if (existingIdempotencyKey.status === 'PROCESSING') {
+        throw new BadRequestException('Transaction is processing');
+      }
+    }
+
+    // hash req and create idempotency
+    const reqHash = await this.hashService.hash(JSON.stringify(data));
+    await this.idempotencyRepository.create({
+      idempotencyKey,
+      requestHash: reqHash,
+      status: IdempotencyStatus.PROCESSING,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    const transactionCode = generateTransactionCode();
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        const sender = await tx.wallet.findUnique({
+          where: { id: fromWalletId },
+        });
+        if (!sender) throw new BadRequestException('Wallet not found');
+        const isPinValid = await this.hashService.compare({
+          hashed: sender.pinCode,
+          plainText: String(pinCode),
+        });
+        if (!isPinValid) {
+          throw new BadRequestException('Invalid PIN code');
+        }
+
+        const transaction = await tx.transaction.create({
+          data: {
+            walletId: fromWalletId,
+            transactionRef: transactionCode,
+            amountBigint: BigInt(amount),
+            transactionType: 'TOPUP',
+            description: `Top up wallet from default source with ${transactionCode}`,
+            status: 'PENDING',
+          },
+        });
+
+        await this.prisma.idempotencyKey.update({
+          where: { idempotencyKey },
+          data: {
+            transactionId: transaction.id,
+          },
+        });
+      });
+      return {
+        data: {
+          qrCode: `https://qr.sepay.vn/img?acc=22012051822&bank=MBBank&amount=${amount}&des=${transactionCode}`,
+          transactionCode,
+        },
+      };
+    } catch (error) {
+      // if Error => rollback
+      await this.idempotencyRepository.update({
+        idempotencyKey,
+        status: 'FAILED',
+      });
+      console.log('ERROR', error);
       throw error;
     }
   }

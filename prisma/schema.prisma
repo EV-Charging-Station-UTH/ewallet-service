@@ -204,6 +204,23 @@ model ExternalPayment {
   @@map("external_payments")
 }
 
+model PaymentTransaction {
+  id                 Int      @id @default(autoincrement())
+  gateway            String   @db.VarChar(100)
+  transactionDate    DateTime @default(now())
+  accountNumber      String?  @db.VarChar(100)
+  subAccount         String?  @db.VarChar(250)
+  amountIn           Int      @default(0)
+  amountOut          Int      @default(0)
+  accumulated        Int      @default(0)
+  code               String?  @db.VarChar(250)
+  transactionContent String?  @db.Text
+  referenceNumber    String?  @db.VarChar(255)
+  body               String?  @db.Text
+
+  createdAt DateTime @default(now())
+}
+
 // ============================================
 // *** ENUM
 // ============================================
