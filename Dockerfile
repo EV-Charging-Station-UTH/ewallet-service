@@ -1,9 +1,14 @@
-FROM node:20-alpine AS builder
+FROM node:22 AS builder
+
+# Create app directory
 WORKDIR /app
 
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
-RUN npm install
+COPY prisma ./prisma/
 
+# Install app dependencies
+RUN npm install
 
 COPY . .
 
@@ -11,15 +16,11 @@ RUN npx prisma generate
 
 RUN npm run build
 
-FROM node:20-alpine AS runner
-WORKDIR /app
+FROM node:22
 
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev
-
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 
-EXPOSE 3003
-
-CMD ["node", "dist/main.js"]
+EXPOSE 3000
+CMD [ "npm", "run", "start:prod" ]

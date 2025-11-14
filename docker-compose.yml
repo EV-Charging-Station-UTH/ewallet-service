@@ -1,15 +1,10 @@
-version: '3.8'
-
 services:
-  # ------------------------
-  # RabbitMQ
-  # ------------------------
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"    # RabbitMQ protocol
-      - "15672:15672"  # Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -18,9 +13,6 @@ services:
     networks:
       - backend-network
 
-  # ------------------------
-  # Postgres Database
-  # ------------------------
   postgres:
     image: postgres:15-alpine
     container_name: postgres
@@ -36,9 +28,6 @@ services:
     networks:
       - backend-network
 
-  # ------------------------
-  # NestJS App
-  # ------------------------
   app:
     build:
       context: .
@@ -57,16 +46,10 @@ services:
     networks:
       - backend-network
 
-# ------------------------
-# Networks
-# ------------------------
 networks:
   backend-network:
     driver: bridge
 
-# ------------------------
-# Volumes
-# ------------------------
 volumes:
   rabbitmq_data:
   postgres_data:
