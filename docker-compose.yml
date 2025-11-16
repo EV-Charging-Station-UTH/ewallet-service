@@ -14,32 +14,55 @@ services:
       - backend-network
 
   postgres:
-    image: postgres:15-alpine
-    container_name: postgres
+    image: postgres:15
+    container_name: mockdb
     restart: always
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: bifwallet
+      POSTGRES_DB: ewallet-db
+      POSTGRES_USER: mock
+      POSTGRES_PASSWORD: mock
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ewallet-db:/var/lib/postgresql/data
     networks:
       - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mock -d ewallet-db"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  prisma-studio:
+    image: node:lts-alpine3.17
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: npx prisma studio --port 5555 --browser none
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    networks:
+      - backend-network
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./Dockerfile
     container_name: bifwallet-app
     restart: always
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgres://admin:admin123@postgres:5432/bifwallet
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      NODE_ENV: development
+      - DATABASE_URL=postgresql://mock:mock@postgres:5432/ewallet-db?schema=public
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - NODE_ENV=production
     ports:
-      - "3003:3003"
+      - "8888:8888"
     depends_on:
       - postgres
       - rabbitmq
@@ -52,4 +75,4 @@ networks:
 
 volumes:
   rabbitmq_data:
-  postgres_data:
+  ewallet-db:
