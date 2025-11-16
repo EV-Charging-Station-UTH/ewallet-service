@@ -35,6 +35,7 @@ services:
 
   prisma-studio:
     image: node:lts-alpine3.17
+    container_name: ewallet-service-prisma-studio-1
     working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app

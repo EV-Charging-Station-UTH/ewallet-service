@@ -1,13 +1,12 @@
 import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
-import {
-  CreateWalletKycDto,
-} from './dto/create-wallet-kyc.dto';
+import { CreateWalletKycDto } from './dto/create-wallet-kyc.dto';
 import { KycService } from './kyc.service';
 import { ApproveKycDto } from './dto/approve-kyc.dto';
 import { updatePinCodeDto } from './dto/update-otp.dto';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
-@Controller('wallets')
+@Controller()
 export class WalletsController {
   constructor(
     private readonly walletsService: WalletsService,
@@ -15,29 +14,33 @@ export class WalletsController {
   ) {}
 
   // ===== Wallet =====
-  @Post()
-  createWallet(@Body() body: CreateWalletKycDto) {
-    return this.walletsService.createWalletKyc(body);
+  @EventPattern('wallet.create')
+  createWallet(@Payload() data: CreateWalletKycDto) {
+    return this.walletsService.createWalletKyc(data);
   }
 
-  @Get('/:userId')
-  getWallet(@Param('userId') userId: string) {
-    return this.walletsService.getWallet(userId);
+  @EventPattern('wallet.findOne')
+  getWallet(@Payload() data: { userId: string }) {
+    return this.walletsService.getWallet(data.userId);
   }
 
-  @Put('/:id/pin-code')
-  updateOTP(@Param('id') id: string, @Body() body: updatePinCodeDto) {
-    return this.walletsService.updateOtp({ id, ...body });
+  @EventPattern('wallet.updateOtp')
+  updateOTP(@Payload() data: { id: string } & updatePinCodeDto) {
+    const { id, ...rest } = data;
+    return this.walletsService.updateOtp({
+      id: id,
+      ...rest,
+    });
   }
 
   // ===== KYC =====
-  @Post('/kyc/approve')
-  approveKyc(@Body() approveKycDto: ApproveKycDto) {
+  @EventPattern('kyc.approve')
+  approveKyc(@Payload() approveKycDto: ApproveKycDto) {
     return this.kycService.approveKyc(approveKycDto);
   }
 
-  @Get('/kyc/:userId')
-  getKycByUserId(@Param('userId') userId: string) {
-    return this.kycService.getKycByUserId(userId);
+  @EventPattern('kyc.findOne')
+  getKycByUserId(@Payload() data: { userId: string }) {
+    return this.kycService.getKycByUserId(data.userId);
   }
 }
