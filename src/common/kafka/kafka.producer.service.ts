@@ -6,7 +6,7 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   private producer: Producer;
 
   private kafka = new Kafka({
-    brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+    brokers: [process.env.KAFKA_BROKER || 'kafka:9092'],
     logLevel: logLevel.INFO,
   });
 

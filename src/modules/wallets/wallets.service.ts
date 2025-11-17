@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { WalletsRepository } from './wallets.repository';
 import { CreateWalletKycDto } from './dto/create-wallet-kyc.dto';
 import { HashService } from 'src/common/libs/hash/hash.service';
@@ -55,42 +55,52 @@ export class WalletsService {
   }
 
   async createWalletKyc(body: CreateWalletKycDto) {
-    const {
-      confirmPinCode,
-      pinCode,
-      idBackImageUrl,
-      idFrontImageUrl,
-      idNumber,
-      idType,
-      selfieImageUrl,
-      userId,
-      walletType,
-    } = body;
-    const [kyc, _] = await Promise.all([
-      this.kycService.submitKyc({
+    try {
+      const {
+        confirmPinCode,
+        pinCode,
         idBackImageUrl,
         idFrontImageUrl,
         idNumber,
         idType,
         selfieImageUrl,
         userId,
-      }),
-      this.create({
+        walletType,
+      } = body;
+
+      // Gửi KYC
+      const kyc = await this.kycService.submitKyc({
+        idBackImageUrl,
+        idFrontImageUrl,
+        idNumber,
+        idType,
+        selfieImageUrl,
+        userId,
+      });
+
+      // Tạo wallet (đã check duplicate)
+      const wallet = await this.create({
         confirmPinCode,
         pinCode,
         userId,
         walletType,
-      }),
-    ]);
-    await this.walletsRepository.createWalletCreationReq({
-      kycId: kyc.id,
-      userId,
-      walletType,
-    });
+      });
 
-    return {
-      message: 'Create wallet sucessfully!',
-    };
+      // Ghi log tạo wallet
+      await this.walletsRepository.createWalletCreationReq({
+        kycId: kyc.id,
+        userId,
+        walletType,
+      });
+
+      return {
+        message: 'Create wallet successfully!',
+        walletId: wallet.id,
+      };
+    } catch (err) {
+      console.error('[createWalletKyc] Error:', err);
+      throw new BadRequestException(err.message || 'Failed to create wallet');
+    }
   }
 
   async getWallet(userId: string) {

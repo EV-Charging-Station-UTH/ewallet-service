@@ -9,8 +9,14 @@ export class TransactionController {
   constructor(private readonly txService: TransactionService) {}
 
   @EventPattern('transaction.transfer')
-  transfer(@Payload() data: CreateTransferDto) {
-    return this.txService.transfer(data);
+  async handleTransfer(@Payload() data: CreateTransferDto) {
+    try {
+      await this.txService.transfer(data);
+      console.log('Transfer processed:', data.idempotencyKey);
+    } catch (err) {
+      console.error('Transfer failed:', err.message);
+      // Có thể push vào Dead-Letter Queue nếu cần
+    }
   }
   @EventPattern('transaction.topup')
   topup(@Payload() data: CreateTopupDto) {

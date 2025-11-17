@@ -78,7 +78,7 @@ export class TransactionService {
 
         if (sender.balance < amount)
           throw new BadRequestException('Insufficient balance');
-        if (sender.balance > sender.dailyLimit!)
+        if (amount > sender.dailyLimit!)
           throw new BadRequestException('Exceeds daily limit');
 
         // STEP 4: Create transaction

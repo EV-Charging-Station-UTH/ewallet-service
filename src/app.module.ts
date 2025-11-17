@@ -9,6 +9,7 @@ import { TransactionModule } from './modules/transactions/transaction.module';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { HooksModule } from './modules/hooks/hooks.module';
+import { KafkaModule } from './common/kafka/kafka.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { HooksModule } from './modules/hooks/hooks.module';
     NotificationModule,
     HooksModule,
     CommonModule,
+    KafkaModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
