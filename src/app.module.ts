@@ -10,6 +10,7 @@ import { NotificationModule } from './modules/notifications/notifications.module
 import { FirebaseModule } from './firebase/firebase.module';
 import { HooksModule } from './modules/hooks/hooks.module';
 import { KafkaModule } from './common/kafka/kafka.module';
+import { IdempotencyModule } from './modules/idempotency/idempotency.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { KafkaModule } from './common/kafka/kafka.module';
     NotificationModule,
     HooksModule,
     CommonModule,
+    IdempotencyModule,
     KafkaModule
   ],
   controllers: [AppController],
