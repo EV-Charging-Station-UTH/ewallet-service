@@ -2,9 +2,13 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
     super({
+      datasourceUrl: process.env.DATABASE_URL,
       log: ['query', 'info', 'warn', 'error'],
     });
   }
@@ -23,7 +27,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Execute a transaction with automatic retry on version conflict
    */
   async executeTransaction<T>(
-    callback: (prisma: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>) => Promise<T>,
+    callback: (
+      prisma: Omit<
+        PrismaClient,
+        '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+      >,
+    ) => Promise<T>,
     maxRetries = 3,
   ): Promise<T> {
     let attempt = 0;
@@ -33,16 +42,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         return await this.$transaction(callback);
       } catch (error) {
         attempt++;
-        
+
         // Check if it's a version conflict (optimistic locking)
         if (error.code === 'P2034' || error.message?.includes('version')) {
           if (attempt < maxRetries) {
-            console.warn(`Version conflict detected. Retry attempt ${attempt}/${maxRetries}`);
+            console.warn(
+              `Version conflict detected. Retry attempt ${attempt}/${maxRetries}`,
+            );
             await this.delay(100 * attempt); // Exponential backoff
             continue;
           }
         }
-        
+
         throw error;
       }
     }
@@ -77,17 +88,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
 
     const debitSum = entries
-      .filter(e => e.entryType === 'DEBIT')
+      .filter((e) => e.entryType === 'DEBIT')
       .reduce((sum, e) => sum + e.amountBigint, BigInt(0));
 
     const creditSum = entries
-      .filter(e => e.entryType === 'CREDIT')
+      .filter((e) => e.entryType === 'CREDIT')
       .reduce((sum, e) => sum + e.amountBigint, BigInt(0));
 
     return debitSum === creditSum;
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
