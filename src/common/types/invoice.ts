@@ -1,7 +1,7 @@
 import { InvoiceStatus } from '@prisma/client';
 
 export type CreateInvoiceType = {
-  sessionId: number;
+  sessionId: string;
   userId: string;
   walletId: string;
   amountBigint: bigint;
@@ -11,7 +11,7 @@ export type CreateInvoiceType = {
 };
 
 export type UpdateInvoiceType = {
-  sessionId?: number;
+  sessionId?: string;
   walletId?: string
   userId?: string;
   amountBigint?: string;

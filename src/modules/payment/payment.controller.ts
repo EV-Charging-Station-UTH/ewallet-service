@@ -1,21 +1,26 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
-import { PaymentService } from '../services/payment.service';
-import { CheckoutDto } from '../dto/checkout.dto';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { Controller, Post, Body, Get, Req } from '@nestjs/common';
+import { CheckoutDto } from './dtos/checkout.dto';
+import { ManualDto } from './dtos/manual.dto';
+import { PaymentService } from './payment.service';
 
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('checkout')
-  async checkout(@Body() dto: CheckoutDto) {
-    return this.paymentService.checkout(dto.sessionId);
+  checkout(@Body() body: CheckoutDto) {
+    return this.paymentService.checkout({
+      pinCode: body.pinCode,
+      walletId: body.walletId,
+      sessionId: body.sessionId,
+      idempotencyKey: body.idempotencyKey,
+      userId: body.userId,
+    });
   }
 
-  @Get('invoices')
-  @UseGuards(JwtAuthGuard)
-  async getInvoices(@Req() req) {
+  @Post('manual')
+  manual(@Body() body: ManualDto, @Req() req) {
     const userId = req.user?.id;
-    return this.paymentService.listInvoicesForUser(userId);
+    return this.paymentService.manual({ ...body, userId });
   }
 }

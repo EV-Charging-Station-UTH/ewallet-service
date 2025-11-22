@@ -11,6 +11,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { HooksModule } from './modules/hooks/hooks.module';
 import { KafkaModule } from './common/kafka/kafka.module';
 import { IdempotencyModule } from './modules/idempotency/idempotency.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { IdempotencyModule } from './modules/idempotency/idempotency.module';
     HooksModule,
     CommonModule,
     IdempotencyModule,
-    KafkaModule
+    KafkaModule,
+    PaymentModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

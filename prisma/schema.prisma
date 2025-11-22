@@ -75,7 +75,6 @@ model Wallet {
   relatedTransactions Transaction[]       @relation("RelatedWallet")
   ledgerEntries       LedgerEntry[]
   bankAccounts        LinkedBankAccount[]
-  invoices            Invoice[]
 
   @@index([userId])
   @@index([status])
@@ -105,7 +104,6 @@ model Transaction {
   ledgerEntries   LedgerEntry[]
   idempotencyKey  IdempotencyKey?
   externalPayment ExternalPayment?
-  invoice         Invoice?
 
   @@index([walletId])
   @@index([relatedWalletId])
@@ -221,30 +219,6 @@ model PaymentTransaction {
   body               String?  @db.Text
 
   createdAt DateTime @default(now())
-}
-
-model Invoice {
-  id            String        @id @default(uuid()) @db.Uuid
-  sessionId     Int           @map("session_id") // sessionId từ Driver/Charging Service
-  userId        String        @map("user_id") @db.Uuid
-  walletId      String        @map("wallet_id") @db.Uuid
-  transactionId String?       @unique @map("transaction_id") @db.Uuid
-  amountBigint  BigInt        @map("amount_bigint")
-  currency      String        @default("VND") @db.VarChar(3)
-  status        InvoiceStatus @default(PENDING)
-  description   String?       @db.Text
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-
-  // Relations
-  wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-
-  @@index([sessionId])
-  @@index([userId])
-  @@index([walletId])
-  @@index([status])
-  @@map("invoices")
 }
 
 // ============================================
