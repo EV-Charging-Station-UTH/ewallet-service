@@ -6,7 +6,7 @@ import { ApproveKycDto } from './dto/approve-kyc.dto';
 import { updatePinCodeDto } from './dto/update-otp.dto';
 import { EventPattern, Payload } from '@nestjs/microservices';
 
-@Controller()
+@Controller('wallet')
 export class WalletsController {
   constructor(
     private readonly walletsService: WalletsService,

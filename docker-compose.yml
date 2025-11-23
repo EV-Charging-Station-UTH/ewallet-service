@@ -99,7 +99,7 @@ services:
       postgres:
         condition: service_healthy
 
-  app:
+  ewallet-service:
     build:
       context: .
       dockerfile: ./Dockerfile
