@@ -19,9 +19,9 @@ export class WalletsController {
     return this.walletsService.createWalletKyc(data);
   }
 
-  @EventPattern('wallet.findOne')
-  getWallet(@Payload() data: { userId: string }) {
-    return this.walletsService.getWallet(data.userId);
+  @Get('/:userId')
+  getWallet(@Param() param: { userId: string }) {
+    return this.walletsService.getWallet(param.userId);
   }
 
   @EventPattern('wallet.updateOtp')
@@ -39,8 +39,8 @@ export class WalletsController {
     return this.kycService.approveKyc(approveKycDto);
   }
 
-  @EventPattern('kyc.findOne')
-  getKycByUserId(@Payload() data: { userId: string }) {
-    return this.kycService.getKycByUserId(data.userId);
+  @Get('kyc/:userId')
+  getKycByUserId(@Param() param: { userId: string }) {
+    return this.kycService.getKycByUserId(param.userId);
   }
 }
