@@ -7,98 +7,113 @@ External services should use the following Kafka topics to communicate with this
 
 ### 1. Wallet Operations (`WalletsController`)
 
-| Topic | Description | Expected Payload (DTO) | Controller Method |
-| :--- | :--- | :--- | :--- |
-| `wallet.create` | Creates a new Wallet and initial KYC record for a user. | `CreateWalletKycDto` | `createWallet` |
-| `wallet.findOne` | Retrieves detailed Wallet information based on the user ID. | `{ "userId": string }` | `getWallet` |
-| `wallet.updateOtp` | Updates the Wallet's PIN/OTP code. | `{ "id": string } & updatePinCodeDto` | `updateOTP` |
+#### Topic (`wallet_events`)
 
-### 2. KYC Operations (`WalletsController`)
+**Create Wallet Example:**
+```json
+{
+  "type": "create_wallet",
+  "payload": {
+    "userId": "uuid",
+    "pinCode": 123456,
+    "confirmPinCode": 123456,
+    "walletType": "PERSONAL",
+    "idNumber": "123456789",
+    "idType": "CCCD",
+    "idFrontImageUrl": "url",
+    "idBackImageUrl": "url",
+    "selfieImageUrl": "url"
+  }
+}
+```
 
-| Topic | Description | Expected Payload (DTO) | Controller Method |
-| :--- | :--- | :--- | :--- |
-| `kyc.approve` | Approves the user's KYC status. | `ApproveKycDto` | `approveKyc` |
-| `kyc.findOne` | Retrieves detailed KYC information based on the user ID. | `{ "userId": string }` | `getKycByUserId` |
+**Update OTP Example:**
+```json
+{
+  "type": "update_otp",
+  "payload": {
+    "id": "uuid",
+    "userId": "uuid",
+    "pinCodeOld": 123456,
+    "newPinCode": 654321,
+    "comfirmNewPinCode": 654321
+  }
+}
+```
+
+**KYC Approve Example:**
+```json
+{
+  "type": "kyc_approve",
+  "payload": {
+    "kycId": "uuid",
+    "verificationStatus": "APPROVED",
+    "verifiedBy": "admin-uuid"
+  }
+}
+```
+
+### 2. Payment Operations (`PaymentController`)
+
+#### Topic (`payment_events`)
+
+**Checkout Example:**
+```json
+{
+  "type": "checkout",
+  "payload": {
+    "sessionId": "uuid",
+    "idempotencyKey": "uuid",
+    "userId": "uuid",
+    "walletId": "uuid",
+    "pinCode": 123456
+  }
+}
+```
+
+**Manual Payment Example:**
+```json
+{
+  "type": "manual",
+  "payload": {
+    "sessionId": "uuid",
+    "amount": 50000,
+    "userId": "uuid"
+  }
+}
+```
 
 ### 3. Transaction Operations (`TransactionController`)
 
-| Topic | Description | Expected Payload (DTO) | Controller Method |
-| :--- | :--- | :--- | :--- |
-| `transaction.transfer` | Executes a money transfer transaction. | `CreateTransferDto` | `transfer` |
-| `transaction.topup` | Executes a top-up/deposit transaction. | `CreateTransferDto` | `topup` |
+#### Topic (`transaction_events`)
 
-### 4. Notification Outgoing Event (Producer)
-
-This service **produces** events to the Notification service. This topic is consumed by the external Notification service.
-
-| Topic | Description | Payload Structure |
-| :--- | :--- | :--- |
-| `notifications.device` | Request to send a push notification to a specific device. | `{ "token": string; "title": string; "body": string }` |
-
----
-
-### 5. DTO
-#### CreateWalletKycDto
-
-```typescript
+**Transfer Example:**
+```json
 {
-  userId: string; // UUID
-  pinCode: number; // 0-999999
-  confirmPinCode: number; // 0-999999
-  walletType?: WalletType; // default: PERSONAL enum: PERSONAL | BUSINESS
-  idNumber: string;
-  idType: string;
-  idFrontImageUrl: string;
-  idBackImageUrl: string;
-  selfieImageUrl: string;
+  "type": "transfer",
+  "payload": {
+    "fromWalletId": "uuid",
+    "toWalletNumber": "0987654321",
+    "amount": 50000,
+    "description": "Chuyen tien",
+    "pinCode": 123456,
+    "idempotencyKey": "unique-key"
+  }
 }
 ```
 
-#### updatePinCodeDto
-```typescript
+**Topup Example:**
+```json
 {
-  userId: string;         // UUID
-  pinCodeOld: number;
-  newPinCode: number;
-  comfirmNewPinCode: number;
+  "type": "topup",
+  "payload": {
+    "fromWalletId": "uuid",
+    "amount": 100000,
+    "pinCode": 123456,
+    "idempotencyKey": "unique-key"
+  }
 }
 ```
 
-#### ApproveKycDto
-```typescript
-// KycStatus {
-// PENDING = 'PENDING',
-// APPROVED = 'APPROVED',
-// REJECTED = 'REJECTED',
-// }
-{
-  kycId: string;
-  verificationStatus: KycStatus;
-  verifiedBy: string;
-}
-```
 
-#### CreateTransferDto
-```typescript
-{
-  fromWalletId: string;        // UUID
-  fromWalletNumber: string;
-  toWalletNumber: string;
-  amount: number;              // integer >= 1
-  description: string;
-  pinCode: number;             // integer
-  idempotencyKey: string;
-}
-```
-
-#### CreateTopupDto
-```typescript
-{
-  fromWalletId: string;        // UUID
-  fromWalletNumber: string;
-  amount: number;              // integer, min 1
-  pinCode: number;             // integer
-  idempotencyKey: string;
-}
-```
 

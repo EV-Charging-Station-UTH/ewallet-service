@@ -9,7 +9,8 @@ import type { EventTransactionDto } from './dto/event-transaction.dto';
 export class TransactionController {
   constructor(private readonly txService: TransactionService) {}
 
-  @EventPattern('transaction_envents')
+  // transaction consumer
+  @EventPattern('transaction_events')
   async handleEventTransaction(@Payload() message: EventTransactionDto) {
     switch (message.type) {
       case 'transfer':
