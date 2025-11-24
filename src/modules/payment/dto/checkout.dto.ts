@@ -19,5 +19,5 @@ export class CheckoutDto {
 
   @IsInt()
   @Max(999999)
-  pinCode;
+  pinCode: number;
 }
