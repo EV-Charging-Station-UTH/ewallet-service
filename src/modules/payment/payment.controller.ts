@@ -20,7 +20,7 @@ export class PaymentController {
         return;
 
       case 'manual':
-        this.paymentService.manual(message.payload);
+        await this.paymentService.manual(message.payload);
         console.log('manual processed', message);
         return;
 
