@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { IdempotencyStatus } from 'src/common/enums/wallet.enum';
 import { HashService } from 'src/common/libs/hash/hash.service';
 import { IdempotencyRepository } from 'src/common/repositories/idempotency.repository';
@@ -11,11 +17,23 @@ type ManualBodyType = {
 };
 @Injectable()
 export class PaymentService {
+  private readonly urlChargingService = process.env.URL_CHARGING_SERVICE;
   constructor(
     private readonly prisma: PrismaService,
     private readonly idempotencyRepository: IdempotencyRepository,
     private readonly hashService: HashService,
+    private readonly http: HttpService,
   ) {}
+
+  private async getDetailSession(sessionId: string) {
+    try {
+      return await this.http.axiosRef.get(
+        `${this.urlChargingService}/sessions/${sessionId}`,
+      );
+    } catch (error) {
+      throw new error();
+    }
+  }
 
   async checkout(data: {
     sessionId: string;
@@ -28,6 +46,16 @@ export class PaymentService {
     if (!sessionId) {
       throw new BadRequestException('sessionId is required');
     }
+    const response = await this.getDetailSession(sessionId);
+    const session = response.data.data;
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    if (session.status !== 'stop') throw new ForbiddenException();
+
+    if (session.cost <= 0)
+      throw new BadRequestException('Cost must be greater than 0');
+
     const existingIdempotencyKey =
       await this.idempotencyRepository.findUniqueIdempotencyKey({
         idempotencyKey,
@@ -50,9 +78,8 @@ export class PaymentService {
       expiresAt: new Date(Date.now() + 1000 * 60 * 10),
     });
 
-    
     // Gọi charging-service để kiểm tra và lấy ra amount
-    const amount = 100000; // data ex
+    const amount = session.cost;
 
     try {
       // BEGIN
@@ -148,18 +175,43 @@ export class PaymentService {
     }
   }
 
-  manual(data: ManualBodyType) {
+  async manual(data: ManualBodyType) {
     const { amount, sessionId } = data;
-    if (!sessionId) {
-      throw new BadRequestException('sessionId is required');
-    }
+    try {
+      if (!sessionId) {
+        throw new BadRequestException('sessionId is required');
+      }
 
-    if (amount < 0) {
-      throw new BadRequestException('Amount must be greater than 0');
-    }
+      const response = await this.getDetailSession(sessionId);
+      const session = response.data.data;
 
-    return {
-      message: 'Manual payment created – waiting for admin approval',
-    };
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+
+      const { status, cost } = session;
+
+      if (status !== 'stop') {
+        throw new ForbiddenException('Session is not stopped');
+      }
+
+      if (cost <= 0) {
+        throw new BadRequestException('Cost must be greater than 0');
+      }
+
+      if (amount <= 0) {
+        throw new BadRequestException('Amount must be greater than 0');
+      }
+
+      if (cost !== amount) {
+        throw new BadRequestException('Amount does not match session cost');
+      }
+
+      return {
+        message: 'Manual payment created – waiting for admin approval',
+      };
+    } catch (error) {
+      throw new error();
+    }
   }
 }

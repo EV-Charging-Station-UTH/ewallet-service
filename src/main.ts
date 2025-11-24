@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,7 +32,10 @@ async function bootstrap() {
       },
     }),
   );
-
+  
+  app.useGlobalInterceptors(new TransformInterceptor());
+  // app.useGlobalInterceptors(new LoggingInterceptor())
+  
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('E-Wallet API')
@@ -47,7 +51,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-
   const port = process.env.PORT || 8888;
   await app.startAllMicroservices();
   app.setGlobalPrefix('api/v1');
