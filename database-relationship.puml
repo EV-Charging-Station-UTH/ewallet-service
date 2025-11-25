@@ -1,0 +1,154 @@
+@startuml
+!theme plain
+hide circle
+skinparam linetype ortho
+
+entity "KycProfile" as KycProfile {
+  *id : UUID
+  --
+  userId : UUID
+  idNumber : VarChar(20)
+  idType : IdType
+  idFrontImageUrl : Text
+  idBackImageUrl : Text
+  selfieImageUrl : Text
+  verificationStatus : KycStatus
+  verifiedAt : DateTime
+  verifiedBy : VarChar(100)
+  rejectionReason : Text
+  createdAt : DateTime
+  updatedAt : DateTime
+}
+
+entity "WalletCreationRequest" as WalletCreationRequest {
+  *id : UUID
+  --
+  userId : UUID
+  kycId : UUID <<FK>>
+  requestStatus : RequestStatus
+  walletType : WalletType
+  rejectionReason : Text
+  processedAt : DateTime
+  createdAt : DateTime
+}
+
+entity "Wallet" as Wallet {
+  *id : UUID
+  --
+  userId : UUID
+  pinCode : String
+  walletNumber : VarChar(50)
+  walletType : WalletType
+  currency : VarChar(3)
+  balance : BigInt
+  status : WalletStatus
+  dailyLimit : BigInt
+  monthlyLimit : BigInt
+  activatedAt : DateTime
+  createdAt : DateTime
+  updatedAt : DateTime
+  version : Int
+}
+
+entity "Transaction" as Transaction {
+  *id : UUID
+  --
+  transactionRef : VarChar(100)
+  walletId : UUID <<FK>>
+  relatedWalletId : UUID <<FK>>
+  transactionType : TransactionType
+  amountBigint : BigInt
+  currency : VarChar(3)
+  status : TransactionStatus
+  description : Text
+  metadata : Json
+  createdAt : DateTime
+  updatedAt : DateTime
+  completedAt : DateTime
+}
+
+entity "LedgerEntry" as LedgerEntry {
+  *id : UUID
+  --
+  transactionId : UUID <<FK>>
+  walletId : UUID <<FK>>
+  entryType : EntryType
+  amountBigint : BigInt
+  currency : VarChar(3)
+  balanceBeforeBigint : BigInt
+  balanceAfterBigint : BigInt
+  description : Text
+  createdAt : DateTime
+}
+
+entity "IdempotencyKey" as IdempotencyKey {
+  *idempotencyKey : VarChar(100)
+  --
+  transactionId : UUID <<FK>>
+  requestHash : VarChar(64)
+  responseData : Json
+  status : IdempotencyStatus
+  expiresAt : DateTime
+  createdAt : DateTime
+}
+
+entity "LinkedBankAccount" as LinkedBankAccount {
+  *id : UUID
+  --
+  userId : UUID
+  walletId : UUID <<FK>>
+  bankCode : VarChar(20)
+  accountNumber : VarChar(50)
+  accountHolderName : VarChar(255)
+  verificationStatus : BankVerifyStatus
+  isPrimary : Boolean
+  verifiedAt : DateTime
+  createdAt : DateTime
+  updatedAt : DateTime
+}
+
+entity "ExternalPayment" as ExternalPayment {
+  *id : UUID
+  --
+  transactionId : UUID <<FK>>
+  bankAccountId : UUID <<FK>>
+  provider : VarChar(50)
+  providerTransactionId : VarChar(100)
+  paymentMethod : PaymentMethod
+  amountBigint : BigInt
+  currency : VarChar(3)
+  status : TransactionStatus
+  callbackData : Json
+  createdAt : DateTime
+  updatedAt : DateTime
+}
+
+entity "PaymentTransaction" as PaymentTransaction {
+  *id : Int
+  --
+  gateway : VarChar(100)
+  transactionDate : DateTime
+  accountNumber : VarChar(100)
+  subAccount : VarChar(250)
+  amountIn : Int
+  amountOut : Int
+  accumulated : Int
+  code : VarChar(250)
+  transactionContent : Text
+  referenceNumber : VarChar(255)
+  body : Text
+  createdAt : DateTime
+}
+
+' Relations
+KycProfile ||..o{ WalletCreationRequest : "kycId"
+Wallet ||..o{ Transaction : "walletId"
+Wallet ||..o{ Transaction : "relatedWalletId"
+Wallet ||..o{ LedgerEntry : "walletId"
+Wallet ||..o{ LinkedBankAccount : "walletId"
+Transaction ||..o{ LedgerEntry : "transactionId"
+Transaction ||..|| IdempotencyKey : "transactionId"
+Transaction ||..|| ExternalPayment : "transactionId"
+LinkedBankAccount ||..o{ ExternalPayment : "bankAccountId"
+
+@enduml
